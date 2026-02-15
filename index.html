@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>मेरे नोट्स - My Notes App</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+            background: white;
+            min-height: 100vh;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 15px 20px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .back-btn {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .back-btn:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+        }
+
+        .content {
+            padding: 20px;
+            min-height: calc(100vh - 80px);
+        }
+
+        .folder-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .folder-card, .note-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+
+        .folder-card:hover, .note-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+            border-color: #4facfe;
+        }
+
+        .folder-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+            color: #4facfe;
+        }
+
+        .folder-name {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .folder-count {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .add-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 20px 0;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .add-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal-content {
+            background: white;
+            margin: 10% auto;
+            padding: 30px;
+            border-radius: 20px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideIn {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .modal h2 {
+            margin-bottom: 20px;
+            color: #333;
+            font-size: 24px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        .form-group input, .form-group textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e1e1e1;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+            font-family: inherit;
+        }
+
+        .form-group input:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: #4facfe;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 150px;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: #4facfe;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #3d8bfe;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: #e1e1e1;
+            color: #666;
+        }
+
+        .btn-secondary:hover {
+            background: #d1d1d1;
+        }
+
+        .note-card {
+            margin-bottom: 15px;
+        }
+
+        .note-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .note-preview {
+            color: #666;
+            font-size: 14px;
+            line-height: 1.4;
+            margin-bottom: 10px;
+        }
+
+        .note-date {
+            color: #999;
+            font-size: 12px;
+        }
+
+        .note-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 12px;
+            border-radius: 6px;
+        }
+
+        .btn-edit {
+            background: #ffc107;
+            color: white;
+        }
+
+        .btn-delete {
+            background: #dc3545;
+            color: white;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+
+        .empty-state-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+            color: #ddd;
+        }
+
+        .empty-state h3 {
+            margin-bottom: 10px;
+            font-size: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .folder-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .modal-content {
+                margin: 5% auto;
+                width: 95%;
+                padding: 20px;
+            }
+            
+            .modal-buttons {
+                flex-direction: column;
+            }
+            
+            .header h1 {
+                font-size: 20px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .content {
+                padding: 15px;
+            }
+            
+            .folder-card, .note-card {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>
+                <button class="back-btn" id="backBtn" style="display: none;">← वापस</button>
+                <span id="headerTitle">📝 मेरे नोट्स</span>
+            </h1>
+        </header>
+
+        <main class="content">
+            <!-- Home View - Folders -->
+            <div id="homeView">
+                <button class="add-btn" onclick="showAddFolderModal()">
+                    📁 नया फोल्डर बनाएं
+                </button>
+                <div id="foldersContainer" class="folder-grid"></div>
+                <div id="emptyFolders" class="empty-state" style="display: none;">
+                    <div class="empty-state-icon">📂</div>
+                    <h3>कोई फोल्डर नहीं मिला</h3>
+                    <p>अपना पहला फोल्डर बनाकर नोट्स organize करना शुरू करें!</p>
+                </div>
+            </div>
+
+            <!-- Folder View - Notes -->
+            <div id="folderView" style="display: none;">
+                <button class="add-btn" onclick="showAddNoteModal()">
+                    ✏️ नया नोट लिखें
+                </button>
+                <div id="notesContainer"></div>
+                <div id="emptyNotes" class="empty-state" style="display: none;">
+                    <div class="empty-state-icon">📝</div>
+                    <h3>कोई नोट नहीं मिला</h3>
+                    <p>इस फोल्डर में अपना पहला नोट लिखना शुरू करें!</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Add Folder Modal -->
+    <div id="folderModal" class="modal">
+        <div class="modal-content">
+            <h2>नया फोल्डर बनाएं</h2>
+            <form id="folderForm">
+                <div class="form-group">
+                    <label for="folderName">फोल्डर का नाम:</label>
+                    <input type="text" id="folderName" placeholder="जैसे: Work, Personal, Ideas" required>
+                </div>
+                <div class="modal-buttons">
+                    <button type="button" class="btn btn-secondary" onclick="closeFolderModal()">रद्द करें</button>
+                    <button type="submit" class="btn btn-primary">बनाएं</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add/Edit Note Modal -->
+    <div id="noteModal" class="modal">
+        <div class="modal-content">
+            <h2 id="noteModalTitle">नया नोट लिखें</h2>
+            <form id="noteForm">
+                <div class="form-group">
+                    <label for="noteTitle">नोट का शीर्षक:</label>
+                    <input type="text" id="noteTitle" placeholder="आपके नोट का शीर्षक" required>
+                </div>
+                <div class="form-group">
+                    <label for="noteContent">नोट लिखें:</label>
+                    <textarea id="noteContent" placeholder="यहाँ अपना नोट लिखें..." required></textarea>
+                </div>
+                <div class="modal-buttons">
+                    <button type="button" class="btn btn-secondary" onclick="closeNoteModal()">रद्द करें</button>
+                    <button type="submit" class="btn btn-primary" id="noteSubmitBtn">सेव करें</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let currentFolder = null;
+        let currentNoteId = null;
+        let folders = {};
+        let notes = {};
+
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', function() {
+            try {
+                loadData();
+                showHome();
+                
+                // Show storage status to user
+                if (!isLocalStorageAvailable()) {
+                    setTimeout(() => {
+                        alert('⚠️ नोट: आपका browser localStorage support नहीं करता। आपके नोट्स सिर्फ इस session में ही save रहेंगे।');
+                    }, 1000);
+                }
+            } catch (error) {
+                console.log('App initialization error:', error);
+                // Initialize with empty data
+                folders = {};
+                notes = {};
+                showHome();
+            }
+        });
+
+        // Check if localStorage is available
+        function isLocalStorageAvailable() {
+            try {
+                const test = '__localStorage_test__';
+                localStorage.setItem(test, test);
+                localStorage.removeItem(test);
+                return true;
+            } catch (e) {
+                return false;
+            }
+        }
+
+        // Data Management
+        function loadData() {
+            try {
+                if (isLocalStorageAvailable()) {
+                    const savedFolders = localStorage.getItem('notesApp_folders');
+                    const savedNotes = localStorage.getItem('notesApp_notes');
+                    
+                    folders = savedFolders ? JSON.parse(savedFolders) : {};
+                    notes = savedNotes ? JSON.parse(savedNotes) : {};
+                } else {
+                    // Fallback to memory storage
+                    folders = {};
+                    notes = {};
+                }
+            } catch (error) {
+                console.log('Data loading error:', error);
+                folders = {};
+                notes = {};
+            }
+        }
+
+        function saveData() {
+            try {
+                if (isLocalStorageAvailable()) {
+                    localStorage.setItem('notesApp_folders', JSON.stringify(folders));
+                    localStorage.setItem('notesApp_notes', JSON.stringify(notes));
+                } else {
+                    // Data will be stored in memory only (until page refresh)
+                    console.log('localStorage not available - data stored in memory only');
+                }
+            } catch (error) {
+                console.log('Data saving error:', error);
+                // Continue without showing alert to avoid interruption
+            }
+        }
+
+        // Navigation
+        function showHome() {
+            document.getElementById('homeView').style.display = 'block';
+            document.getElementById('folderView').style.display = 'none';
+            document.getElementById('backBtn').style.display = 'none';
+            document.getElementById('headerTitle').textContent = '📝 मेरे नोट्स';
+            currentFolder = null;
+            renderFolders();
+        }
+
+        function showFolder(folderId) {
+            document.getElementById('homeView').style.display = 'none';
+            document.getElementById('folderView').style.display = 'block';
+            document.getElementById('backBtn').style.display = 'inline-block';
+            document.getElementById('headerTitle').textContent = `📁 ${folders[folderId].name}`;
+            currentFolder = folderId;
+            renderNotes();
+        }
+
+        document.getElementById('backBtn').addEventListener('click', showHome);
+
+        // Render Functions
+        function renderFolders() {
+            const container = document.getElementById('foldersContainer');
+            const emptyState = document.getElementById('emptyFolders');
+            
+            if (!container || !emptyState) return;
+            
+            const folderIds = Object.keys(folders);
+            
+            if (folderIds.length === 0) {
+                container.innerHTML = '';
+                emptyState.style.display = 'block';
+                return;
+            }
+            
+            emptyState.style.display = 'none';
+            
+            container.innerHTML = folderIds.map(folderId => {
+                const folder = folders[folderId];
+                if (!folder) return '';
+                
+                const noteCount = Object.values(notes).filter(note => note && note.folderId === folderId).length;
+                
+                return `
+                    <div class="folder-card" onclick="showFolder('${folderId}')">
+                        <div class="folder-icon">📁</div>
+                        <div class="folder-name">${escapeHtml(folder.name)}</div>
+                        <div class="folder-count">${noteCount} नोट्स</div>
+                    </div>
+                `;
+            }).filter(html => html).join('');
+        }
+
+        function renderNotes() {
+            const container = document.getElementById('notesContainer');
+            const emptyState = document.getElementById('emptyNotes');
+            
+            if (!container || !emptyState || !currentFolder) return;
+            
+            const folderNotes = Object.entries(notes)
+                .filter(([_, note]) => note && note.folderId === currentFolder)
+                .sort((a, b) => new Date(b[1].updatedAt) - new Date(a[1].updatedAt));
+            
+            if (folderNotes.length === 0) {
+                container.innerHTML = '';
+                emptyState.style.display = 'block';
+                return;
+            }
+            
+            emptyState.style.display = 'none';
+            
+            container.innerHTML = folderNotes.map(([noteId, note]) => {
+                if (!note) return '';
+                
+                const preview = note.content.substring(0, 100) + (note.content.length > 100 ? '...' : '');
+                const date = new Date(note.updatedAt).toLocaleDateString('hi-IN');
+                
+                return `
+                    <div class="note-card">
+                        <div class="note-title">${escapeHtml(note.title)}</div>
+                        <div class="note-preview">${escapeHtml(preview)}</div>
+                        <div class="note-date">अपडेट: ${date}</div>
+                        <div class="note-actions">
+                            <button class="btn btn-edit btn-small" onclick="editNote('${noteId}')">✏️ एडिट</button>
+                            <button class="btn btn-delete btn-small" onclick="deleteNote('${noteId}')">🗑️ डिलीट</button>
+                        </div>
+                    </div>
+                `;
+            }).filter(html => html).join('');
+        }
+
+        // Helper function to escape HTML
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Folder Management
+        function showAddFolderModal() {
+            document.getElementById('folderModal').style.display = 'block';
+            document.getElementById('folderName').focus();
+        }
+
+        function closeFolderModal() {
+            document.getElementById('folderModal').style.display = 'none';
+            document.getElementById('folderForm').reset();
+        }
+
+        document.getElementById('folderForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const name = document.getElementById('folderName').value.trim();
+            if (!name) return;
+            
+            const folderId = Date.now().toString();
+            folders[folderId] = {
+                id: folderId,
+                name: name,
+                createdAt: new Date().toISOString()
+            };
+            
+            saveData();
+            closeFolderModal();
+            renderFolders();
+        });
+
+        // Note Management
+        function showAddNoteModal() {
+            document.getElementById('noteModalTitle').textContent = 'नया नोट लिखें';
+            document.getElementById('noteSubmitBtn').textContent = 'सेव करें';
+            document.getElementById('noteModal').style.display = 'block';
+            document.getElementById('noteTitle').focus();
+            currentNoteId = null;
+        }
+
+        function closeNoteModal() {
+            document.getElementById('noteModal').style.display = 'none';
+            document.getElementById('noteForm').reset();
+            currentNoteId = null;
+        }
+
+        function editNote(noteId) {
+            const note = notes[noteId];
+            if (!note) return;
+            
+            document.getElementById('noteModalTitle').textContent = 'नोट एडिट करें';
+            document.getElementById('noteSubmitBtn').textContent = 'अपडेट करें';
+            document.getElementById('noteTitle').value = note.title;
+            document.getElementById('noteContent').value = note.content;
+            document.getElementById('noteModal').style.display = 'block';
+            currentNoteId = noteId;
+        }
+
+        function deleteNote(noteId) {
+            if (confirm('क्या आप वाकई इस नोट को डिलीट करना चाहते हैं?')) {
+                delete notes[noteId];
+                saveData();
+                renderNotes();
+                renderFolders(); // Update folder note counts
+            }
+        }
+
+        document.getElementById('noteForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const title = document.getElementById('noteTitle').value.trim();
+            const content = document.getElementById('noteContent').value.trim();
+            
+            if (!title || !content) return;
+            
+            const now = new Date().toISOString();
+            
+            if (currentNoteId) {
+                // Edit existing note
+                notes[currentNoteId] = {
+                    ...notes[currentNoteId],
+                    title: title,
+                    content: content,
+                    updatedAt: now
+                };
+            } else {
+                // Add new note
+                const noteId = Date.now().toString();
+                notes[noteId] = {
+                    id: noteId,
+                    title: title,
+                    content: content,
+                    folderId: currentFolder,
+                    createdAt: now,
+                    updatedAt: now
+                };
+            }
+            
+            saveData();
+            closeNoteModal();
+            renderNotes();
+            renderFolders(); // Update folder note counts
+        });
+
+        // Close modals when clicking outside
+        window.addEventListener('click', function(e) {
+            if (e.target.classList.contains('modal')) {
+                e.target.style.display = 'none';
+                if (e.target.id === 'folderModal') {
+                    document.getElementById('folderForm').reset();
+                } else if (e.target.id === 'noteModal') {
+                    document.getElementById('noteForm').reset();
+                    currentNoteId = null;
+                }
+            }
+        });
+    </script>
+</body>
+</html>
